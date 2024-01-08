@@ -1,0 +1,3 @@
+import model
+
+cp = ConsentPacket()

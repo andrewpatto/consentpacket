@@ -1,0 +1,68 @@
+load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_test")
+
+py_binary(
+    name = "main",
+    srcs = [
+        "main.py",
+    ],
+    deps = [
+        "//packages/python/generated:python_dataclass_library",
+    ],
+)
+
+py_test(
+    name = "test",
+    srcs = ["test.py"],
+    deps = [
+        "//packages/python/generated:python_dataclass_library",
+    ],
+)
+
+#load("@rules_python//generated:defs.bzl", "py_binary")
+
+#py_binary(
+#    name = "main",
+#    srcs = [
+#        "main.py",
+#        "//generators/generated:python_dataclass_model",
+#    ],
+#)
+
+#load("@my_pip_install//:requirements.bzl", "entry_point")
+#
+#alias(
+#    name = "twine",
+#    actual = entry_point("twine"),
+#)
+#
+#py_binary(
+#    name = "main",
+#    srcs = ["t.py"],
+#)
+#
+#py_binary(
+#    name = "generator",
+#    srcs = [
+#        "src/generator.py",
+#    ],
+#    data = [
+#        ":generator_inputs",
+#    ],
+#    imports = ["."],
+#    main = "src/generator.py",
+#)
+#
+#genrule(
+#    name = "generated_cpp_sources",
+#    outs = ["src/generated.cpp"],
+#    cmd = "$(location :generator)",
+#    tools = [":generator"],
+#)
+#
+#cc_binary(
+#    name = "run_generated_cpp",
+#    srcs = ["src/generated.cpp"],
+#    deps = [
+#        "//cpp_lib",
+#    ],
+#)

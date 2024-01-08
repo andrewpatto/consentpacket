@@ -1,0 +1,27 @@
+bazel_dep(name = "aspect_rules_py", version = "0.5.0")
+bazel_dep(name = "aspect_bazel_lib", version = "2.1.0")
+bazel_dep(name = "rules_python", version = "0.27.1")
+
+#
+# Create a hermetic Python toolchain fixed to a version
+#
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    is_default = True,
+    python_version = "3.11",
+)
+use_repo(
+    python,
+    python = "python_versions",
+)
+
+#
+# Create a set of pip installed Python tools using a designated requirements.txt
+#
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    hub_name = "pypi",
+    python_version = "3.11",
+    requirements_lock = "//generators/python_tools:requirements.txt",
+)
+use_repo(pip, "pypi")

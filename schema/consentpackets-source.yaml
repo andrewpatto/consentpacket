@@ -1,0 +1,237 @@
+# Consentpackets uses yaml as the source document for json schema
+#
+# To convert vrs.yaml to vrs.json:
+#   make vrs.json
+# You'll probably have to `pip install pyyaml` first.
+#
+# To watch for changes and update automatically:
+#   make watch &
+
+# we are not using any particular edge features of JSON schema so this basically
+# tracks what is needed for maximum support of tools in the JSON schema ecosystem
+# https://json-schema.org/understanding-json-schema/reference/schema.html
+$schema: "http://json-schema.org/draft-07/schema#"
+
+# the canonical location for this schema
+# $id: "http://ga4gh.org/schemas/myschema.json"
+
+title: "GA4GH ConsentPackets Definitions"
+strict: true
+type: object
+$ref: "#/definitions/ConsentPacket"
+
+definitions:
+
+  ConsentPacket:
+    description: A representation of consent for genomics
+    type: object
+    properties:
+      schemaMajorVersion:
+        description: Major version of the ConsentPacket schema that this packet was created for
+        type: integer
+      consents:
+        type: array
+        minItems: 0
+        items:
+          $ref: "#/definitions/Consent"
+    required:
+      - "schemaMajorVersion"
+      - "consents"
+
+
+
+  #
+  # A consent packet is a representation of consent for an artifact or class of artifacts
+  # (i.e. the consent for a single BAM files, or a collection of VCF files, or for an abstract "patient")
+  #
+
+  Consent:
+    description: A representation of consent for genomics
+    type: object
+    properties:
+      target:
+        description: The target of the consent statements
+        type: object
+        $ref: "#/definitions/ConsentTarget"
+
+      statements:
+        description: List of statements, any of which must be true for consent to be granted
+        type: array
+        items:
+          oneOf:
+            - $ref: "#/definitions/FreeTextConsentStatement"
+            - $ref: "#/definitions/DuoConsentStatement"
+    required: [ "target", "statements" ]
+    example:
+      target: Bruce
+      statements:
+        - text: Anything goes
+        - limitation:
+            xx: "a"
+          modifiers:
+            - a
+            - b
+
+
+  ConsentTarget:
+    description: A meaningful identifier to establish the target of a consent statement
+    oneOf:
+      - $ref: "#/definitions/ConsentTargetCohort"
+      - $ref: "#/definitions/ConsentTargetIndividual"
+      - $ref: "#/definitions/ConsentTargetBiosample"
+      - $ref: "#/definitions/ConsentTargetObject"
+
+  ConsentTargetCohort:
+    description: A target that identifies a cohort (really any group)
+    properties:
+      cohortId:
+        type: string
+    required: ["cohortId"]
+
+
+  ConsentTargetIndividual:
+    description: A target that identifies an individual
+    properties:
+      individualId:
+        type: string
+    required: ["individualId"]
+
+  ConsentTargetBiosample:
+    description: A target that identifies a biosample
+    properties:
+      biosampleId:
+        type: string
+    required: ["biosampleId"]
+
+  ConsentTargetObject:
+    description: A target that identifies a raw genomic object artifact (a BAM for instance)
+    oneOf:
+      - required:
+        - "objectId"
+      - required:
+        - "objectLocation"
+    properties:
+      objectId:
+        type: string
+      objectLocation:
+        type: string
+      subSelect:
+        type: string
+    additionalProperties: false
+
+  ConsentStatement:
+    description: >-
+      A single statement of consent about a target
+    oneOf:
+      - $ref: "#/definitions/FreeTextConsentStatement"
+      - $ref: "#/definitions/DuoConsentStatement"
+    properties:
+      type:
+        type: string
+        description: The ConsentStatement class type. MUST match child class type.
+    required: ["type"]
+
+  FreeTextConsentStatement:
+    description: A statement of consent using free text language - use of this may prevent automated use
+    properties:
+      text:
+        type: string
+        description: Free text language describing consent
+    required: ["text"]
+
+  DuoConsentStatement:
+    description: A statement of consent using the DUO coding system
+    oneOf:
+      - $ref: "#/definitions/DuoDataUseLimitationHmb"
+      - $ref: "#/definitions/DuoDataUseLimitationNoBaseRestriction"
+      - $ref: "#/definitions/DuoDataUseLimitationDiseaseSpecific"
+    properties:
+      # the DUO permission grants a base level of access rights
+      # which can then be further
+#      permission:
+#        $ref: "#/definitions/DuoDataUseLimitation"
+      modifiers:
+        type: array
+        items:
+          $ref: "#/definitions/DuoDataUseModifier"
+#    required: ["permission"]
+
+
+
+
+
+  # https://json-schema.org/blog/posts/modelling-inheritance
+
+
+  # =============================================================================
+  # Kinds of Data Use Limitations
+  # =============================================================================
+
+  DuoDataUseLimitation:
+    description: >-
+      A single individual clause applying consent rules
+    oneOf:
+      - $ref: "#/definitions/DuoDataUseLimitationHmb"
+      - $ref: "#/definitions/DuoDataUseLimitationNoBaseRestriction"
+      - $ref: "#/definitions/DuoDataUseLimitationDiseaseSpecific"
+
+
+  DuoDataUseLimitationHmb:
+    properties:
+      code:
+        const: "DUO:0000006"
+      shorthand:
+        const: "HMB"
+    required: ["code"]
+
+  DuoDataUseLimitationNoBaseRestriction:
+    properties:
+      code:
+        const: "DUO:0000004"
+      shorthand:
+        const: "NRES"
+    required: ["code"]
+
+  DuoDataUseLimitationDiseaseSpecific:
+    properties:
+      code:
+        const: "DUO:0000007"
+      shorthand:
+        const: "DS"
+      disease:
+        type: string
+    required: ["code", "disease"]
+
+
+  DuoDataUseModifier:
+    description: A modification of a limitation
+    oneOf:
+      - $ref: "#/definitions/DuoDataUseModifierGeneric"
+      - $ref: "#/definitions/DuoDataUseModifierPublicationRequired"
+      - $ref: "#/definitions/DuoDataUseModifierPublicationMoratorium"
+
+  DuoDataUseModifierGeneric:
+    properties:
+      code:
+        const: "DUO:1234"
+      shorthand:
+        const: "NRES"
+    required: ["code"]
+
+  DuoDataUseModifierPublicationRequired:
+    properties:
+      code:
+        const: "DUO:0000019"
+      shorthand:
+        const: "PUB"
+    required: ["code"]
+
+  DuoDataUseModifierPublicationMoratorium:
+    properties:
+      code:
+        const: "DUO:0000024"
+      shorthand:
+        const: "MOR"
+      after:
+        type: string
+    required: ["code", "after"]

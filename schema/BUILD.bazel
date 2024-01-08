@@ -1,0 +1,26 @@
+# https://shantanugoel.com/2020/05/03/bazel-rule-auto-generate-files-compile-time/
+
+#cc_binary(
+#  name = "header_generator",
+#  srcs = ["header_generator.cc"],
+#)
+
+#genrule(
+#  name = "generate_header",
+#  outs = ["header.h"],
+#  cmd = "./$(location :header_generator) > $@",
+#  tools = [":header_generator"],
+#)
+
+#cc_library(
+#  name = "header",
+#  hdrs = [":generate_header"],
+#)
+
+#cc_binary(
+#  name = "main",
+#  srcs = ["main.cc"],
+#  deps = [":header"],
+#)
+
+exports_files(["consentpackets-source.yaml"])
